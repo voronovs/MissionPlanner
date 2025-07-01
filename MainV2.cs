@@ -4847,20 +4847,30 @@ namespace MissionPlanner
             while (!token.IsCancellationRequested)
             {
                 string value = await Task.Run(() => GetLinkSiyiValue());
-                if (toolStripTextBoxLinkSiyi != null)
+                int intValue;
+                bool isInt = int.TryParse(value, out intValue);
+
+                if (isInt && intValue >= -100 && intValue <= -14)
                 {
-                    // update of UI must be in main stream
-                    if (toolStripTextBoxLinkSiyi.GetCurrentParent().InvokeRequired)
+                    if (toolStripTextBoxLinkSiyi != null)
                     {
-                        toolStripTextBoxLinkSiyi.GetCurrentParent().Invoke((Action)(() =>
-                            toolStripTextBoxLinkSiyi.Text = $"LinkSiyi: {value} dBm"));
-                    }
-                    else
-                    {
-                        toolStripTextBoxLinkSiyi.Text = $"LinkSiyi: {value} dBm";
+                        // update of UI must be in main stream
+                        if (toolStripTextBoxLinkSiyi.GetCurrentParent().InvokeRequired)
+                        {
+                            toolStripTextBoxLinkSiyi.GetCurrentParent().Invoke((Action)(() =>
+                                toolStripTextBoxLinkSiyi.Text = $"LinkSiyi: {value} dBm"));
+                        }
+                        else
+                        {
+                            toolStripTextBoxLinkSiyi.Text = $"LinkSiyi: {value} dBm";
+                        }
                     }
                 }
-                await Task.Delay(1000, token); // 1 second between asks
+                else if (value == "NO LINK")
+                {
+                    toolStripTextBoxLinkSiyi.Text = $"LinkSiyi: {value}";
+                }
+                    await Task.Delay(1000, token); // 1 second between asks
             }
         }
     }
