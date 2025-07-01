@@ -2171,6 +2171,7 @@ namespace MissionPlanner
         /// <param name="e"></param>
         protected override void OnFormClosed(FormClosedEventArgs e)
         {
+            linkSiyiCts?.Cancel();
             base.OnFormClosed(e);
 
             Console.WriteLine("MainV2_FormClosed");
@@ -3144,6 +3145,11 @@ namespace MissionPlanner
 
         protected override void OnLoad(EventArgs e)
         {
+            base.OnLoad(e);
+            // ... your code ...
+            linkSiyiCts = new CancellationTokenSource();
+            _ = LinkSiyiLoopAsync(linkSiyiCts.Token);
+
             // check if its defined, and force to show it if not known about
             if (Settings.Instance["menu_autohide"] == null)
             {
@@ -4580,8 +4586,12 @@ namespace MissionPlanner
         const Int32 DIGCF_DEVICEINTERFACE = 0X10;
         const Int32 WM_DEVICECHANGE = 0X219;
         public static Guid GUID_DEVINTERFACE_USB_DEVICE = new Guid("A5DCBF10-6530-11D2-901F-00C04FB951ED");
-
-
+        // inside MainV2:
+        private System.Windows.Forms.ToolStripTextBox toolStripTextBoxLinkSiyi;
+        private CancellationTokenSource linkSiyiCts;
+        //private System.Windows.Forms.Timer linkSiyiTimer;
+        //private int linkSiyiCounter = 0;
+        
         public enum WM_DEVICECHANGE_enum
         {
             DBT_CONFIGCHANGECANCELED = 0x19,
@@ -4654,11 +4664,11 @@ namespace MissionPlanner
         {
             try
             {
-                System.Diagnostics.Process.Start("https://ardupilot.org/?utm_source=Menu&utm_campaign=MP");
+                System.Diagnostics.Process.Start("https://cablewalker.com/");
             }
             catch
             {
-                CustomMessageBox.Show("Failed to open url https://ardupilot.org");
+                CustomMessageBox.Show("Failed to open url https://cablewalker.com/");
             }
         }
 
@@ -4795,6 +4805,62 @@ namespace MissionPlanner
                     //We have our panel, color it and exit loop
                     break;
                 }
+            }
+        }
+        
+        private string GetLinkSiyiValue()
+        {
+            try
+            {
+                using (var udp = new UdpClient())
+                {
+                    udp.Client.ReceiveTimeout = 2000;
+                    var endpoint = new IPEndPoint(IPAddress.Parse("192.168.144.12"), 19856); // default
+                    byte[] request = new byte[] { 0x55, 0x66, 0x01, 0x00, 0x00, 0x00, 0x00, 0x44, 0x05, 0xdc };
+                    udp.Send(request, request.Length, endpoint);
+
+                    var remoteEP = new IPEndPoint(IPAddress.Any, 0);
+                    var response = udp.Receive(ref remoteEP);
+
+                    if (response != null && response.Length >= 45)// && response[7] == 0x44)
+                    {
+                        // Recieve bytes from 32 to 35 (indexes 32,33,34,35)
+                        byte[] bytes = new byte[4];
+                        Array.Copy(response, 32, bytes, 0, 4);
+                        // Little-endian: Low byte in the front
+                        int value = BitConverter.ToInt32(bytes, 0);
+                        return value.ToString();
+                    }
+                    else
+                    {
+                        return "NO LINK";
+                    }
+                }
+            }
+            catch
+            {
+                return "NO LINK";
+            }
+        }
+        private async Task LinkSiyiLoopAsync(CancellationToken token)
+        {
+            while (!token.IsCancellationRequested)
+            {
+                string value = await Task.Run(() => GetLinkSiyiValue());
+                if (toolStripTextBoxLinkSiyi != null)
+                {
+                    // update of UI must be in main stream
+                    if (toolStripTextBoxLinkSiyi.GetCurrentParent().InvokeRequired)
+                    {
+                        toolStripTextBoxLinkSiyi.GetCurrentParent().Invoke((Action)(() =>
+                            toolStripTextBoxLinkSiyi.Text = $"LinkSiyi: {value} dBm"));
+                    }
+                    else
+                    {
+                        toolStripTextBoxLinkSiyi.Text = $"LinkSiyi: {value} dBm";
+                    }
+                }
+                await Task.Delay(1000, token); // 1 second between asks
             }
         }
     }

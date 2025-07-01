@@ -49,6 +49,7 @@ namespace MissionPlanner
             this.MenuConfigTune = new System.Windows.Forms.ToolStripButton();
             this.MenuSimulation = new System.Windows.Forms.ToolStripButton();
             this.MenuHelp = new System.Windows.Forms.ToolStripButton();
+            this.toolStripTextBoxLinkSiyi = new System.Windows.Forms.ToolStripTextBox();
             this.MenuConnect = new System.Windows.Forms.ToolStripButton();
             this.toolStripConnectionControl = new MissionPlanner.Controls.ToolStripConnectionControl();
             this.MenuArduPilot = new System.Windows.Forms.ToolStripButton();
@@ -73,6 +74,7 @@ namespace MissionPlanner
             this.MenuConfigTune,
             this.MenuSimulation,
             this.MenuHelp,
+            this.toolStripTextBoxLinkSiyi,
             this.MenuConnect,
             this.toolStripConnectionControl,
             this.MenuArduPilot});
@@ -172,6 +174,14 @@ namespace MissionPlanner
             this.MenuHelp.Margin = new System.Windows.Forms.Padding(0);
             this.MenuHelp.Name = "MenuHelp";
             this.MenuHelp.Click += new System.EventHandler(this.MenuHelp_Click);
+            // 
+            // MenuLinkSiyi
+            // 
+            resources.ApplyResources(this.toolStripTextBoxLinkSiyi, "toolStripTextBoxLinkSiyi");
+            this.toolStripTextBoxLinkSiyi.ReadOnly = true;
+            this.toolStripTextBoxLinkSiyi.Text = "LinkSiyi: 0";
+            this.toolStripTextBoxLinkSiyi.Margin = new System.Windows.Forms.Padding(0);
+            this.toolStripTextBoxLinkSiyi.Name = "toolStripTextBoxLinkSiyi";
             // 
             // MenuConnect
             // 
